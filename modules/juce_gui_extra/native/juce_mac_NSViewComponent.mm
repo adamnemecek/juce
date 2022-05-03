@@ -51,7 +51,7 @@ struct NSViewFrameChangeCallbackClass   : public ObjCClass<NSObject>
 
     static void setTarget (id self, NSViewCallbackInterface* c)
     {
-        object_setInstanceVariable (self, "target", c);
+        setIvar3(self, "target", c);
     }
 
 private:
@@ -76,7 +76,6 @@ public:
     ~NSViewFrameWatcher() override
     {
         [[NSNotificationCenter defaultCenter] removeObserver: callback];
-        [callback release];
         callback = nil;
     }
 
@@ -114,7 +113,6 @@ public:
           view (v), owner (comp),
           currentPeer (nullptr)
     {
-        [view retain];
         [view setPostsFrameChangedNotifications: YES];
         updateAlpha();
 
@@ -125,7 +123,6 @@ public:
     ~NSViewAttachment() override
     {
         removeFromParent();
-        [view release];
     }
 
     void componentMovedOrResized (Component& comp, bool wasMoved, bool wasResized) override
@@ -160,7 +157,7 @@ public:
 
             if (peer != nullptr)
             {
-                auto peerView = (NSView*) peer->getNativeHandle();
+                auto peerView = (__bridge NSView*) peer->getNativeHandle();
                 [peerView addSubview: view];
                 componentMovedOrResized (false, false);
             }
@@ -223,8 +220,9 @@ void NSViewComponent::setView (void* view)
 
 void* NSViewComponent::getView() const
 {
-    return attachment != nullptr ? static_cast<NSViewAttachment*> (attachment.get())->view
+    NSView *v = attachment != nullptr ? static_cast<NSViewAttachment*> (attachment.get())->view
                                  : nullptr;
+    return (__bridge void*)v;
 }
 
 void NSViewComponent::resizeToFitView()
@@ -253,7 +251,9 @@ void NSViewComponent::alphaChanged()
 
 ReferenceCountedObject* NSViewComponent::attachViewToComponent (Component& comp, void* view)
 {
-    return new NSViewAttachment ((NSView*) view, comp);
+
+    return new NSViewAttachment ((__bridge NSView*) view, comp);
+
 }
 
 } // namespace juce

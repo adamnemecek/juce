@@ -61,7 +61,9 @@ private:
             {
                 static AccessibilityElement cls;
                 Holder element ([cls.createInstance() init]);
-                object_setInstanceVariable (element.get(), "handler", &handler);
+                setIvar3(element.get(), "handler", &handler);
+//                object_setInstanceVariable (element.get(), "handler", &handler);
+//                assert(false);
                 return element;
             }
 
@@ -148,7 +150,7 @@ private:
 
         static NSArray* getSelectedChildren (NSArray* children)
         {
-            NSMutableArray* selected = [[NSMutableArray new] autorelease];
+            NSMutableArray* selected = [NSMutableArray new];
 
             for (id child in children)
             {
@@ -216,15 +218,15 @@ private:
                         if (auto* modalHandler = modal->getAccessibilityHandler())
                         {
                             if (auto* focusChild = modalHandler->getChildFocus())
-                                return (id) focusChild->getNativeImplementation();
+                                return (__bridge id) focusChild->getNativeImplementation();
 
-                            return (id) modalHandler->getNativeImplementation();
+                            return (__bridge id) modalHandler->getNativeImplementation();
                         }
                     }
                 }
 
                 if (auto* focusChild = handler->getChildFocus())
-                    return (id) focusChild->getNativeImplementation();
+                    return (__bridge id) focusChild->getNativeImplementation();
             }
 
             return nil;
@@ -235,7 +237,7 @@ private:
             if (auto* handler = getHandler (self))
             {
                 if (auto* child = handler->getChildAt (roundToIntPoint (flippedScreenPoint (point))))
-                    return (id) child->getNativeImplementation();
+                    return (__bridge id) child->getNativeImplementation();
 
                 return self;
             }
@@ -248,9 +250,9 @@ private:
             if (auto* handler = getHandler (self))
             {
                 if (auto* parentHandler = handler->getParent())
-                    return NSAccessibilityUnignoredAncestor ((id) parentHandler->getNativeImplementation());
+                    return NSAccessibilityUnignoredAncestor ((__bridge id) parentHandler->getNativeImplementation());
 
-                return NSAccessibilityUnignoredAncestor ((id) handler->getComponent().getWindowHandle());
+                return NSAccessibilityUnignoredAncestor ((__bridge id) handler->getComponent().getWindowHandle());
             }
 
             return nil;
@@ -265,7 +267,7 @@ private:
                 auto* accessibleChildren = [NSMutableArray arrayWithCapacity: (NSUInteger) children.size()];
 
                 for (auto* childHandler : children)
-                    [accessibleChildren addObject: (id) childHandler->getNativeImplementation()];
+                    [accessibleChildren addObject: (__bridge id) childHandler->getNativeImplementation()];
 
                 return accessibleChildren;
             }
@@ -486,7 +488,7 @@ private:
             NSString* string = [self accessibilityStringForRange: range];
 
             if (string != nil)
-                return [[[NSAttributedString alloc] initWithString: string] autorelease];
+                return [[NSAttributedString alloc] initWithString: string];
 
             return nil;
         }
@@ -579,7 +581,7 @@ private:
         //==============================================================================
         static NSArray* getAccessibilityRows (id self, SEL)
         {
-            NSMutableArray* rows = [[NSMutableArray new] autorelease];
+            NSMutableArray* rows = [NSMutableArray new];
 
             if (auto* tableInterface = getTableInterface (self))
             {
@@ -587,7 +589,7 @@ private:
                 {
                     if (auto* handler = tableInterface->getCellHandler (row, 0))
                     {
-                        [rows addObject: (id) handler->getNativeImplementation()];
+                        [rows addObject: (__bridge id) handler->getNativeImplementation()];
                     }
                     else
                     {
@@ -614,7 +616,7 @@ private:
 
         static NSArray* getAccessibilityColumns (id self, SEL)
         {
-            NSMutableArray* columns = [[NSMutableArray new] autorelease];
+            NSMutableArray* columns = [NSMutableArray new];
 
             if (auto* tableInterface = getTableInterface (self))
             {
@@ -622,7 +624,7 @@ private:
                 {
                     if (auto* handler = tableInterface->getCellHandler (0, column))
                     {
-                        [columns addObject: (id) handler->getNativeImplementation()];
+                        [columns addObject: (__bridge id) handler->getNativeImplementation()];
                     }
                     else
                     {
@@ -838,7 +840,9 @@ private:
 //==============================================================================
 AccessibilityNativeHandle* AccessibilityHandler::getNativeImplementation() const
 {
-    return (AccessibilityNativeHandle*) nativeImpl->getAccessibilityElement();
+    assert(false);
+    return NULL;
+//    return (AccessibilityNativeHandle*) nativeImpl->getAccessibilityElement();
 }
 
 static bool areAnyAccessibilityClientsActive()
@@ -872,7 +876,7 @@ static void sendHandlerNotification (const AccessibilityHandler& handler,
     if (! areAnyAccessibilityClientsActive() || notification == NSAccessibilityNotificationName{})
         return;
 
-    if (id accessibilityElement = (id) handler.getNativeImplementation())
+    if (id accessibilityElement = (__bridge id) handler.getNativeImplementation())
     {
         sendAccessibilityEvent (accessibilityElement, notification,
                                 (notification == NSAccessibilityLayoutChangedNotification

@@ -76,7 +76,7 @@ private:
 
     NSInteger getRawResult() const
     {
-        NSAlert* alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert* alert = [[NSAlert alloc] init];
 
         [alert setMessageText:     juceStringToNS (options.getTitle())];
         [alert setInformativeText: juceStringToNS (options.getMessage())];
@@ -224,8 +224,9 @@ static NSView* getNSViewForDragEvent (Component* sourceComp)
         if (auto* draggingSource = Desktop::getInstance().getDraggingMouseSource (0))
             sourceComp = draggingSource->getComponentUnderMouse();
 
-    if (sourceComp != nullptr)
-        return (NSView*) sourceComp->getWindowHandle();
+    if (sourceComp != nullptr) {
+        return (__bridge NSView*) sourceComp->getWindowHandle();
+    }
 
     jassertfalse;  // This method must be called in response to a component's mouseDown or mouseDrag event!
     return nil;
@@ -239,7 +240,7 @@ struct NSDraggingSourceHelper   : public ObjCClass<NSObject<NSDraggingSource>>
         addIvar<String*> ("text");
         addIvar<NSDragOperation*> ("operation");
 
-        addMethod (@selector (dealloc), dealloc);
+//        addMethod (@selector (dealloc), dealloc);
         addMethod (@selector (pasteboard:item:provideDataForType:), provideDataForType);
 
         addMethod (@selector (draggingSession:sourceOperationMaskForDraggingContext:), sourceOperationMaskForDraggingContext);
@@ -252,17 +253,20 @@ struct NSDraggingSourceHelper   : public ObjCClass<NSObject<NSDraggingSource>>
 
     static void setText (id self, const String& text)
     {
-        object_setInstanceVariable (self, "text", new String (text));
+//        object_setInstanceVariable (self, "text", new String (text));
+        assert(false);
     }
 
     static void setCompletionCallback (id self, std::function<void()> cb)
     {
-        object_setInstanceVariable (self, "callback", new std::function<void()> (cb));
+//        object_setInstanceVariable (self, "callback", new std::function<void()> (cb));
+        assert(false);
     }
 
     static void setDragOperation (id self, NSDragOperation op)
     {
-        object_setInstanceVariable (self, "operation", new NSDragOperation (op));
+//        object_setInstanceVariable (self, "operation", new NSDragOperation (op));
+        assert(false);
     }
 
 private:
@@ -272,7 +276,8 @@ private:
         delete getIvar<std::function<void()>*> (self, "callback");
         delete getIvar<NSDragOperation*> (self, "operation");
 
-        sendSuperclassMessage<void> (self, @selector (dealloc));
+//        sendSuperclassMessage<void> (self, @selector (dealloc));
+        assert(false);
     }
 
     static void provideDataForType (id self, SEL, NSPasteboard* sender, NSPasteboardItem*, NSString* type)
@@ -322,11 +327,11 @@ bool DragAndDropContainer::performExternalDragDropOfText (const String& text, Co
                 if (callback != nullptr)
                     NSDraggingSourceHelper::setCompletionCallback (helper, callback);
 
-                auto pasteboardItem = [[NSPasteboardItem new] autorelease];
+                auto pasteboardItem = [NSPasteboardItem new];
                 [pasteboardItem setDataProvider: helper
                                        forTypes: [NSArray arrayWithObjects: NSPasteboardTypeString, nil]];
 
-                auto dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter: pasteboardItem] autorelease];
+                auto dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter: pasteboardItem];
 
                 NSImage* image = [[NSWorkspace sharedWorkspace] iconForFile: nsEmptyString()];
                 [dragItem setDraggingFrame: getDragRect (view, event) contents: image];
@@ -359,7 +364,7 @@ bool DragAndDropContainer::performExternalDragDropOfFiles (const StringArray& fi
         {
             if (auto event = [[view window] currentEvent])
             {
-                auto dragItems = [[[NSMutableArray alloc] init] autorelease];
+                auto dragItems = [[NSMutableArray alloc] init];
 
                 for (auto& filename : files)
                 {
@@ -375,10 +380,10 @@ bool DragAndDropContainer::performExternalDragDropOfFiles (const StringArray& fi
                                       contents: dragImage];
 
                     [dragItems addObject: dragItem];
-                    [dragItem release];
+//                    [dragItem release];
                 }
 
-                auto helper = [draggingSourceHelper.createInstance() autorelease];
+                auto helper = draggingSourceHelper.createInstance();
 
                 if (callback != nullptr)
                     NSDraggingSourceHelper::setCompletionCallback (helper, callback);
@@ -436,6 +441,10 @@ bool Desktop::isDarkModeActive() const
                 isEqualToString: nsStringLiteral ("Dark")];
 }
 
+#import <objc/runtime.h>
+#import <objc/objc.h>
+#import <objc/message.h>
+
 class Desktop::NativeDarkModeChangeDetectorImpl
 {
 public:
@@ -444,7 +453,21 @@ public:
         static DelegateClass delegateClass;
 
         delegate = [delegateClass.createInstance() init];
-        object_setInstanceVariable (delegate, "owner", this);
+//        Ivar ivar = class_getInstanceVariable([delegate class], "owner");
+//        if (ivar == NULL) {
+//            class_addI
+//        }
+//        object_setInstanceVariable(delegate, "owner", @encode(this));
+//        object_setIvar(delegate, ivar, this);
+//        object_setIvarWithStrongDefault(delegate, ivar, (void*)this);
+//        object_setInstanceVariable (delegate, "owner", this);
+//        assert(false);
+#if __has_feature(objc_arc)
+        printf("arc enabled\n");
+#else
+        printf("arc disabled\n");
+#endif
+        setIvar3(delegate, "owner", this);
 
         JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wundeclared-selector")
         [[NSDistributedNotificationCenter defaultCenter] addObserver: delegate
@@ -456,9 +479,9 @@ public:
 
     ~NativeDarkModeChangeDetectorImpl()
     {
-        object_setInstanceVariable (delegate, "owner", nullptr);
-        [[NSDistributedNotificationCenter defaultCenter] removeObserver: delegate];
-        [delegate release];
+//        object_setInstanceVariable (delegate, "owner", nullptr);
+//        [[NSDistributedNotificationCenter defaultCenter] removeObserver: delegate];
+        assert(false);
     }
 
     void darkModeChanged()
@@ -698,7 +721,7 @@ static Image createNSWindowSnapshot (NSWindow* nsWindow)
         [bitmapRep drawAtPoint: NSMakePoint (0, 0)];
         releaseImageAfterDrawing();
 
-        [bitmapRep release];
+//        [bitmapRep release];
         CGImageRelease (screenShot);
 
         return result;
@@ -707,7 +730,7 @@ static Image createNSWindowSnapshot (NSWindow* nsWindow)
 
 Image createSnapshotOfNativeWindow (void* nativeWindowHandle)
 {
-    if (id windowOrView = (id) nativeWindowHandle)
+    if (id windowOrView = (__bridge id) nativeWindowHandle)
     {
         if ([windowOrView isKindOfClass: [NSWindow class]])
             return createNSWindowSnapshot ((NSWindow*) windowOrView);

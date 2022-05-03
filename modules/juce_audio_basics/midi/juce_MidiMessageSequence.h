@@ -61,9 +61,10 @@ public:
 
         @see MidiMessageSequence::getEventPointer
     */
-    class MidiEventHolder
+    class MidiEventHolder: public juce::ReferenceCountedObject
     {
     public:
+        using Ptr = juce::ReferenceCountedObjectPtr<MidiEventHolder>;
         //==============================================================================
         /** The message itself, whose timestamp is used to specify the event's time. */
         MidiMessage message;

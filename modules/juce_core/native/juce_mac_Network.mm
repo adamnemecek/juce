@@ -101,7 +101,6 @@ bool JUCE_CALLTYPE Process::openEmailWithAttachments (const String& targetEmailA
         NSAppleScript* s = [[NSAppleScript alloc] initWithSource: juceStringToNS (script)];
         NSDictionary* error = nil;
         const bool ok = [s executeAndReturnError: &error] != nil;
-        [s release];
 
         return ok;
     }
@@ -114,8 +113,8 @@ class URLConnectionStateBase  : public Thread
 public:
     explicit URLConnectionStateBase (NSURLRequest* req, int maxRedirects)
         : Thread ("http connection"),
-          request ([req retain]),
-          data ([[NSMutableData data] retain]),
+          request (req),
+          data ([NSMutableData data]),
           numRedirectsToFollow (maxRedirects)
     {
     }
@@ -171,12 +170,6 @@ public:
     ~URLConnectionStatePreYosemite() override
     {
         stop();
-
-        [connection release];
-        [request release];
-        [headers release];
-        [delegate release];
-        [data release];
     }
 
     bool start (WebInputStream& inputStream, WebInputStream::Listener* listener) override
@@ -256,13 +249,12 @@ public:
 
         contentLength = [response expectedContentLength];
 
-        [headers release];
         headers = nil;
 
         if ([response isKindOfClass: [NSHTTPURLResponse class]])
         {
             NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*) response;
-            headers = [[httpResponse allHeaderFields] retain];
+            headers = [httpResponse allHeaderFields];
             statusCode = (int) [httpResponse statusCode];
         }
 
@@ -350,7 +342,10 @@ private:
             registerClass();
         }
 
-        static void setState (id self, URLConnectionStatePreYosemite* state)  { object_setInstanceVariable (self, "state", state); }
+        static void setState (id self, URLConnectionStatePreYosemite* state)  {
+//            object_setInstanceVariable (self, "state", state);
+            assert(false);
+        }
         static URLConnectionStatePreYosemite* getState (id self)              { return getIvar<URLConnectionStatePreYosemite*> (self, "state"); }
 
     private:
@@ -416,16 +411,10 @@ public:
         }
 
         stopThread (10000);
-        [task release];
-        [request release];
-        [headers release];
 
         [session finishTasksAndInvalidate];
-        [session release];
 
         const ScopedLock sl (dataLock);
-        [delegate release];
-        [data release];
     }
 
     void cancel() override
@@ -505,13 +494,12 @@ public:
 
         contentLength = [response expectedContentLength];
 
-        [headers release];
         headers = nil;
 
         if ([response isKindOfClass: [NSHTTPURLResponse class]])
         {
             auto httpResponse = (NSHTTPURLResponse*) response;
-            headers = [[httpResponse allHeaderFields] retain];
+            headers = [httpResponse allHeaderFields];
             statusCode = (int) [httpResponse statusCode];
         }
 
@@ -575,9 +563,9 @@ public:
     {
         jassert (task == nil && session == nil);
 
-        session = [[NSURLSession sessionWithConfiguration: [NSURLSessionConfiguration defaultSessionConfiguration]
+        session = [NSURLSession sessionWithConfiguration: [NSURLSessionConfiguration defaultSessionConfiguration]
                                                  delegate: delegate
-                                            delegateQueue: [NSOperationQueue currentQueue]] retain];
+                                            delegateQueue: [NSOperationQueue currentQueue]];
 
         {
             const ScopedLock lock (createConnectionLock);
@@ -589,7 +577,6 @@ public:
         if (task == nil)
             return;
 
-        [task retain];
         [task resume];
 
         while (! threadShouldExit())
@@ -620,7 +607,9 @@ private:
             registerClass();
         }
 
-        static void setState (id self, URLConnectionState* state)  { object_setInstanceVariable (self, "state", state); }
+        static void setState (id self, URLConnectionState* state)  {
+//            object_setInstanceVariable (self, "state", state);
+        }
         static URLConnectionState* getState (id self)              { return getIvar<URLConnectionState*> (self, "state"); }
 
     private:
@@ -720,8 +709,6 @@ struct BackgroundDownloadTask  : public URL::DownloadTask
 
         // Workaround for an Apple bug. See https://github.com/AFNetworking/AFNetworking/issues/2334
         [request HTTPBody];
-
-        [request release];
     }
 
     ~BackgroundDownloadTask()
@@ -737,8 +724,6 @@ struct BackgroundDownloadTask  : public URL::DownloadTask
         [session invalidateAndCancel];
         while (! hasBeenDestroyed)
             destroyEvent.wait();
-
-        [delegate release];
     }
 
     bool initOK()

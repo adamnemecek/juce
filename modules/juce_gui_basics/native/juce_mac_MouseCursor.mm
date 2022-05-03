@@ -40,7 +40,6 @@ public:
 
     ~PlatformSpecificHandle()
     {
-        [cursorHandle release];
     }
 
     static void showInWindow (PlatformSpecificHandle* handle, ComponentPeer*)
@@ -59,10 +58,9 @@ public:
 private:
     static NSCursor* fromNSImage (NSImage* im, NSPoint hotspot)
     {
-        NSCursor* c = [[NSCursor alloc] initWithImage: im
-                                              hotSpot: hotspot];
-        [im release];
-        return c;
+        return [[NSCursor alloc] initWithImage: im
+                                       hotSpot: hotspot];
+
     }
 
     static NSCursor* fromHIServices (const char* filename)
@@ -91,15 +89,12 @@ private:
                     [imageRep setSize: originalSize];
 
                     [resultImage addRepresentation: imageRep];
-                    [imageRep release];
                 }
                 else
                 {
                     return nil;
                 }
             }
-
-            [originalImage release];
 
             NSDictionary* info = [NSDictionary dictionaryWithContentsOfFile: juceStringToNS (cursorPath + "/info.plist")];
 
@@ -173,7 +168,6 @@ private:
                     break;
             }
 
-            [c retain];
             return c;
         }
     }

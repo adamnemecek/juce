@@ -308,6 +308,88 @@ public:
         return -1;
     }
 
+//    int indexWhere (std::function<bool(const ObjectClassPtr&)> predicate) const noexcept
+//    {
+//        const ScopedLockType lock (getLock());
+//        auto* e = values.begin();
+//        auto* endPointer = values.end();
+//
+//        while (e != endPointer)
+//        {
+//            if (predicate(*e))
+//                return static_cast<int> (e - values.begin());
+//
+//            ++e;
+//        }
+//
+//        return -1;
+//    }
+
+    //extension MutableCollection {
+    //    @inlinable @inline(__always)
+    //    public mutating func halfStablePartition(
+    //        isSuffixElement: (Element) throws -> Bool
+    //    ) rethrows -> Index {
+    //        guard var i = try firstIndex(where: isSuffixElement)
+    //        else { return endIndex }
+    //
+    //        var j = index(after: i)
+    //        while j != endIndex {
+    //            if try !isSuffixElement(self[j]) {
+    //                swapAt(i, j)
+    //                formIndex(after: &i)
+    //            }
+    //            formIndex(after: &j)
+    //        }
+    //        return i
+    //    }
+    //
+    //}
+
+
+//    int removeAll (std::function<bool(const ObjectClassPtr &)> predicate) {
+//        std::remove_if(values, predicate);
+//        return 0;
+//    }
+
+    // halfstablepartition
+    // removeall
+//    int halfStablePartition (std::function<bool(const ObjectClassPtr&)> isSuffixElement) {
+//        const ScopedLockType lock (getLock());
+//        int firstIndex = indexWhere( [isSuffixElement](const ObjectClassPtr& e) {
+//            isSuffixElement(e);
+//        });
+//
+//        auto* e = values.begin();
+//        auto* endPointer = values.end();
+////        while (e != endPointer) {
+////            if !isSuffixElement(*e) {
+////
+////            }
+////        }
+//
+//
+//
+//        return 0;
+//    }
+
+    int removeAll (std::function<bool(const ObjectClassPtr &)> predicate) {
+        const ScopedLockType lock (getLock());
+
+        auto second = std::partition(values, predicate);
+        auto end = values.end();
+
+        if (second == end) {
+            return -1;
+        }
+
+        auto remove = end - second;
+        assert(remove > 0);
+        removeLast (remove);
+        return remove;
+    }
+
+
     /** Finds the index of the first occurrence of an object in the array.
 
         @param objectToLookFor    the object to look for
@@ -902,6 +984,8 @@ private:
         if (o != nullptr && o->decReferenceCountWithoutDeleting())
             ContainerDeletePolicy<ObjectClass>::destroy (o);
     }
+
 };
+
 
 } // namespace juce

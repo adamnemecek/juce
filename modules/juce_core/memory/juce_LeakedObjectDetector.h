@@ -65,7 +65,7 @@ public:
                 your object management. Tut, tut. Always, always use std::unique_ptrs, OwnedArrays,
                 ReferenceCountedObjects, etc, and avoid the 'delete' operator at all costs!
             */
-            jassertfalse;
+//            jassertfalse;
         }
     }
 
@@ -89,7 +89,7 @@ private:
                     your object management. Tut, tut. Always, always use std::unique_ptrs, OwnedArrays,
                     ReferenceCountedObjects, etc, and avoid the 'delete' operator at all costs!
                 */
-                jassertfalse;
+//                jassertfalse;
             }
         }
 

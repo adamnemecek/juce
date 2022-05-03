@@ -257,7 +257,7 @@ namespace AudioUnitFormatHelpers
                 }
                 else
                 {
-                    NSBundle* bundle = [[NSBundle alloc] initWithPath: (NSString*) fileOrIdentifier.toCFString()];
+                    NSBundle* bundle = [[NSBundle alloc] initWithPath: (__bridge NSString*) fileOrIdentifier.toCFString()];
 
                     NSArray* audioComponents = [bundle objectForInfoDictionaryKey: @"AudioComponents"];
                     NSDictionary* dict = audioComponents[0];
@@ -265,8 +265,6 @@ namespace AudioUnitFormatHelpers
                     desc.componentManufacturer = stringToOSType (nsStringToJuce ((NSString*) [dict valueForKey: @"manufacturer"]));
                     desc.componentType         = stringToOSType (nsStringToJuce ((NSString*) [dict valueForKey: @"type"]));
                     desc.componentSubType      = stringToOSType (nsStringToJuce ((NSString*) [dict valueForKey: @"subtype"]));
-
-                    [bundle release];
                 }
 
                 CFBundleCloseBundleResourceMap (bundleRef.get(), resFileId);
@@ -2048,8 +2046,9 @@ private:
             UInt32 propertySize = sizeof (busNameCF.object);
 
             if (AudioUnitGetProperty (comp, kAudioUnitProperty_ElementName, scope, static_cast<UInt32> (busIdx), &busNameCF.object, &propertySize) == noErr)
-                if (busNameCF.object != nullptr)
-                    busName = nsStringToJuce ((NSString*) busNameCF.object);
+                if (busNameCF.object != nullptr) {
+                    busName = nsStringToJuce ((__bridge NSString*) busNameCF.object);
+                }
 
             {
                 AudioChannelLayout auLayout;
@@ -2268,7 +2267,7 @@ public:
 
     void embedViewController (JUCE_IOS_MAC_VIEW* pluginView, const CGSize& size)
     {
-        wrapper.setView (pluginView);
+        wrapper.setView ((__bridge void *)pluginView);
         waitingForViewCallback = false;
 
       #if JUCE_MAC
@@ -2314,7 +2313,7 @@ private:
         UInt32 dataSize = 0;
         Boolean isWritable = false;
 
-       #if JUCE_MAC
+       #if false
         if (AudioUnitGetPropertyInfo (plugin.audioUnit, kAudioUnitProperty_CocoaUI, kAudioUnitScope_Global,
                                       0, &dataSize, &isWritable) == noErr
              && dataSize != 0
@@ -2361,10 +2360,11 @@ private:
             ViewControllerCallbackBlock callback;
             callback = viewControllerCallback;
 
-            ViewControllerCallbackBlock* info = &callback;
+            assert(false);
+//            ViewControllerCallbackBlock* info = &callback;
 
-            if (noErr == AudioUnitSetProperty (plugin.audioUnit, kAudioUnitProperty_RequestViewController, kAudioUnitScope_Global, 0, info, dataSize))
-                return true;
+//            if (noErr == AudioUnitSetProperty (plugin.audioUnit, kAudioUnitProperty_RequestViewController, kAudioUnitScope_Global, 0, info, dataSize))
+//                return true;
 
             waitingForViewCallback = false;
         }
@@ -2386,7 +2386,8 @@ private:
         ignoreUnused (createGenericViewIfNeeded);
        #endif
 
-        wrapper.setView (pluginView);
+        wrapper.setView ((__bridge void *) pluginView);
+
 
         if (pluginView != nil)
             wrapper.resizeToFitView();
@@ -2417,13 +2418,12 @@ private:
 
                 AsyncViewControllerCallback (AudioUnitPluginWindowCocoa* plugInWindow, JUCE_IOS_MAC_VIEW* inView,
                                              const CGSize& preferredSize)
-                    : owner (plugInWindow), controllerView ([inView retain]), size (preferredSize)
+                    : owner (plugInWindow), controllerView (inView), size (preferredSize)
                 {}
 
                 void messageCallback() override
                 {
                     owner->embedViewController (controllerView, size);
-                    [controllerView release];
                 }
             };
 

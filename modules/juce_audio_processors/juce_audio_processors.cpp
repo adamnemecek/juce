@@ -103,9 +103,10 @@ struct NSViewComponentWithParent  : public NSViewComponent,
     explicit NSViewComponentWithParent (WantsNudge shouldNudge)
         : wantsNudge (shouldNudge)
     {
-        auto* view = [[getViewClass().createInstance() init] autorelease];
-        object_setInstanceVariable (view, "owner", this);
-        setView (view);
+//        auto* view = [getViewClass().createInstance() init];
+        assert(false);
+//        object_setInstanceVariable (view, "owner", this);
+//        setView (view);
     }
 
     explicit NSViewComponentWithParent (AudioPluginInstance& instance)
@@ -113,8 +114,9 @@ struct NSViewComponentWithParent  : public NSViewComponent,
 
     ~NSViewComponentWithParent() override
     {
-        if (auto* view = static_cast<NSView*> (getView()))
-            object_setInstanceVariable (view, "owner", nullptr);
+        assert(false);
+//        if (auto* view = static_cast<NSView*> (__bridge getView()))
+//            object_setInstanceVariable (view, "owner", nullptr);
 
         cancelPendingUpdate();
     }
@@ -136,10 +138,11 @@ private:
     {
         if (auto* peer = getTopLevelComponent()->getPeer())
         {
-            auto* view = static_cast<NSView*> (getView());
-            const auto newArea = peer->getAreaCoveredBy (*this);
-            [view setFrame: makeNSRect (newArea.withHeight (newArea.getHeight() + 1))];
-            [view setFrame: makeNSRect (newArea)];
+            assert(false);
+//            auto* view = static_cast<NSView*> (getView());
+//            const auto newArea = peer->getAreaCoveredBy (*this);
+//            [view setFrame: makeNSRect (newArea.withHeight (newArea.getHeight() + 1))];
+//            [view setFrame: makeNSRect (newArea)];
         }
     }
 

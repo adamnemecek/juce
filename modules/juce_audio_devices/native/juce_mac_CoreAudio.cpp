@@ -255,7 +255,6 @@ public:
                         if (AudioObjectGetPropertyData (deviceID, &pa, 0, nullptr, &size, &nameNSString) == noErr)
                         {
                             name = nsStringToJuce (nameNSString);
-                            [nameNSString release];
                         }
 
                         if ((input ? activeInputChans : activeOutputChans) [chanNum])

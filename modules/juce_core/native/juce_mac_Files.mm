@@ -327,13 +327,12 @@ public:
     {
         JUCE_AUTORELEASEPOOL
         {
-            enumerator = [[[NSFileManager defaultManager] enumeratorAtPath: juceStringToNS (directory.getFullPathName())] retain];
+            enumerator = [[NSFileManager defaultManager] enumeratorAtPath: juceStringToNS (directory.getFullPathName())];
         }
     }
 
     ~Pimpl()
     {
-        [enumerator release];
     }
 
     bool next (String& filenameFound,
@@ -437,7 +436,7 @@ bool JUCE_CALLTYPE Process::openDocument (const String& fileName, const String& 
             StringArray params;
             params.addTokens (parameters, true);
 
-            NSMutableArray* paramArray = [[NSMutableArray new] autorelease];
+            NSMutableArray* paramArray = [NSMutableArray new];
 
             for (int i = 0; i < params.size(); ++i)
                 [paramArray addObject: juceStringToNS (params[i])];
@@ -459,7 +458,7 @@ bool JUCE_CALLTYPE Process::openDocument (const String& fileName, const String& 
 
             JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wdeprecated-declarations")
 
-            NSMutableDictionary* dict = [[NSMutableDictionary new] autorelease];
+            NSMutableDictionary* dict = [NSMutableDictionary new];
 
             [dict setObject: paramArray
                      forKey: nsStringLiteral ("NSWorkspaceLaunchConfigurationArguments")];

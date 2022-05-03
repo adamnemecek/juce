@@ -32,7 +32,7 @@ static NSMutableArray* createAllowedTypesArray (const StringArray& filters)
     if (filters.size() == 0)
         return nil;
 
-    NSMutableArray* filterArray = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* filterArray = [[NSMutableArray alloc] init];
 
     for (int i = 0; i < filters.size(); ++i)
     {
@@ -74,7 +74,8 @@ public:
                        : [safeOpenPanel.createInstance() init];
 
         delegate = [delegateClass.createInstance() init];
-        object_setInstanceVariable (delegate, "cppObject", this);
+//        object_setInstanceVariable (delegate, "cppObject", this);
+        assert(false);
 
         [panel setDelegate: delegate];
 
@@ -109,7 +110,8 @@ public:
             nsViewPreview = [[NSView alloc] initWithFrame: makeNSRect (preview->getLocalBounds())];
             [panel setAccessoryView: nsViewPreview];
 
-            preview->addToDesktop (0, (void*) nsViewPreview);
+//            preview->addToDesktop (0, (void*) nsViewPreview);
+            assert(false);
             preview->setVisible (true);
 
             if (! isSave)
@@ -154,14 +156,10 @@ public:
             if (nsViewPreview != nil)
             {
                 [panel setAccessoryView: nil];
-                [nsViewPreview release];
             }
 
             [panel close];
         }
-
-        if (delegate != nil)
-            [delegate release];
     }
 
     void launch() override

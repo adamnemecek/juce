@@ -156,6 +156,7 @@ MidiMessageSequence::MidiEventHolder* MidiMessageSequence::addEvent (MidiEventHo
     auto time = newEvent->message.getTimeStamp();
     int i;
 
+    printf("midimessagesequence time %f\n", time);
     for (i = list.size(); --i >= 0;)
         if (list.getUnchecked(i)->message.getTimeStamp() <= time)
             break;

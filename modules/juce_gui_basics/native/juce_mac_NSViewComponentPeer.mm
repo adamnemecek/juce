@@ -132,7 +132,6 @@ public:
             // We'll both retain and also release this on closing because plugin hosts can unexpectedly
             // close the window for us, and also tend to get cause trouble if setReleasedWhenClosed is NO.
             [window setReleasedWhenClosed: YES];
-            [window retain];
 
             [window setExcludedFromWindowsMenu: (windowStyleFlags & windowIsTemporary) != 0];
             [window setIgnoresMouseEvents: (windowStyleFlags & windowIgnoresMouseClicks) != 0];
@@ -200,14 +199,11 @@ public:
             setOwner (window, nullptr);
             [window setContentView: nil];
             [window close];
-            [window release];
         }
-
-        [view release];
     }
 
     //==============================================================================
-    void* getNativeHandle() const override    { return view; }
+    void* getNativeHandle() const override    { return (__bridge void*)view; }
 
     void setVisible (bool shouldBeVisible) override
     {
@@ -462,12 +458,10 @@ public:
 
             if (! isFrontmost)
             {
-                [view retain];
                 [subviews removeObject: view];
                 [subviews addObject: view];
 
                 [superview setSubviews: subviews];
-                [view release];
             }
         }
 
@@ -508,13 +502,11 @@ public:
 
                 if (! isBehind)
                 {
-                    [view retain];
                     [subviews removeObject: view];
                     [subviews insertObject: view
                                    atIndex: otherViewIndex];
 
                     [superview setSubviews: subviews];
-                    [view release];
                 }
             }
             else if (component.isVisible())
@@ -780,7 +772,7 @@ public:
     {
         // (need to retain this in case a modal loop runs in handleKeyEvent and
         // our event object gets lost)
-        const NSUniquePtr<NSEvent> r ([ev retain]);
+        const NSUniquePtr<NSEvent> r (ev);
 
         updateKeysDown (ev, true);
         bool used = handleKeyEvent (ev, true);
@@ -810,7 +802,7 @@ public:
     void redirectModKeyChange (NSEvent* ev)
     {
         // (need to retain this in case a modal loop runs and our event object gets lost)
-        const NSUniquePtr<NSEvent> r ([ev retain]);
+        const NSUniquePtr<NSEvent> r (ev);
 
         keysCurrentlyDown.clear();
         handleKeyUpOrDown (true);
@@ -1521,7 +1513,25 @@ private:
 
     static void setOwner (id viewOrWindow, NSViewComponentPeer* newOwner)
     {
-        object_setInstanceVariable (viewOrWindow, "owner", newOwner);
+//        id value = [NSValue valueWithPointer: newOwner];
+////        object_setInstanceVariable (viewOrWindow, "owner", newOwner);
+//
+//        Ivar ivar = class_getInstanceVariable ([viewOrWindow class], "owner");
+//        if (!ivar)
+//        {
+////            BOOL b = class_addIvar([viewOrWindow class], "owner", sizeof (this), (uint8_t) rint (log2 (sizeof (this))), "@");
+//            class_addIvar([viewOrWindow class], "owner", sizeof(id), log2(sizeof(id)), @encode(id));
+//            ivar = class_getInstanceVariable ([viewOrWindow class], "owner");
+////            object_setIvar (obj, ivar, value);
+//        }
+//        object_setIvar(viewOrWindow, <#Ivar  _Nonnull ivar#>, <#id  _Nullable value#>)
+//        assert(false);
+//        setIvar1(viewOrWindow, "owner", newOwner);
+//        NSViewComponentPeer* r = getIvar1<NSViewComponentPeer*>(viewOrWindow, "owner");
+        setIvar3(viewOrWindow, "owner", newOwner);
+        NSViewComponentPeer* r = getIvar3<NSViewComponentPeer*>(viewOrWindow, "owner");
+        assert(newOwner == r);
+
     }
 
     void getClipRects (RectangleList<int>& clip, Point<int> offset, int clipW, int clipH)
@@ -1706,7 +1716,7 @@ struct NSViewComponentPeerWrapper  : public Base
     {
         if (auto* owner = getOwner (self))
             if (auto* handler = owner->getComponent().getAccessibilityHandler())
-                return (id) handler->getNativeImplementation();
+                return (__bridge id) handler->getNativeImplementation();
 
         return nil;
     }
@@ -2010,7 +2020,7 @@ private:
                 Range<int> r ((int) theRange.location,
                               (int) (theRange.location + theRange.length));
 
-                return [[[NSAttributedString alloc] initWithString: juceStringToNS (target->getTextInRange (r))] autorelease];
+                return [[NSAttributedString alloc] initWithString: juceStringToNS (target->getTextInRange (r))];
             }
         }
 
@@ -2487,7 +2497,9 @@ void Desktop::allowedOrientationsChanged() {}
 //==============================================================================
 ComponentPeer* Component::createNewPeer (int styleFlags, void* windowToAttachTo)
 {
-    return new NSViewComponentPeer (*this, styleFlags, (NSView*) windowToAttachTo);
+    return new NSViewComponentPeer (*this, styleFlags, (__bridge NSView*) windowToAttachTo);
+//    assert(false);
+//    return NULL;
 }
 
 //==============================================================================

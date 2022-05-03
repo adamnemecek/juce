@@ -25,12 +25,12 @@ namespace juce
 
 ScopedAutoReleasePool::ScopedAutoReleasePool()
 {
-    pool = [[NSAutoreleasePool alloc] init];
+//    pool = [[NSAutoreleasePool alloc] init];
 }
 
 ScopedAutoReleasePool::~ScopedAutoReleasePool()
 {
-    [((NSAutoreleasePool*) pool) release];
+//    [((NSAutoreleasePool*) pool) release];
 }
 
 //==============================================================================

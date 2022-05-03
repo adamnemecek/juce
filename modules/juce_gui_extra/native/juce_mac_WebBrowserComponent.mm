@@ -175,7 +175,10 @@ struct DownloadClickDetectorClass  : public ObjCClass<NSObject>
         registerClass();
     }
 
-    static void setOwner (id self, WebBrowserComponent* owner)   { object_setInstanceVariable (self, "owner", owner); }
+    static void setOwner (id self, WebBrowserComponent* owner)   {
+//        object_setInstanceVariable (self, "owner", owner);
+        assert(false);
+    }
     static WebBrowserComponent* getOwner (id self)               { return getIvar<WebBrowserComponent*> (self, "owner"); }
 
 private:
@@ -237,7 +240,7 @@ private:
             DeletedFileChooserWrapper (std::unique_ptr<FileChooser> fc, id<WebOpenPanelResultListener> rl)
                 : chooser (std::move (fc)), listener (rl)
             {
-                [listener.get() retain];
+                listener.get();
             }
 
             std::unique_ptr<FileChooser> chooser;
@@ -285,7 +288,10 @@ struct WebViewDelegateClass  : public ObjCClass<NSObject>
         registerClass();
     }
 
-    static void setOwner (id self, WebBrowserComponent* owner)   { object_setInstanceVariable (self, "owner", owner); }
+    static void setOwner (id self, WebBrowserComponent* owner)   {
+//        object_setInstanceVariable (self, "owner", owner);
+        assert(false);
+    }
     static WebBrowserComponent* getOwner (id self)               { return getIvar<WebBrowserComponent*> (self, "owner"); }
 
 private:
@@ -351,7 +357,7 @@ private:
             DeletedFileChooserWrapper (std::unique_ptr<FileChooser> fc, CompletionHandlerType h)
                 : chooser (std::move (fc)), handler (h)
             {
-                [handler.get() retain];
+                handler.get();
             }
 
             ~DeletedFileChooserWrapper()
@@ -594,7 +600,7 @@ public:
             webView = std::make_unique<WebViewImpl> (owner);
        #endif
 
-        setView (webView->getWebView());
+        setView ((__bridge void*) webView->getWebView());
     }
 
     ~Pimpl()

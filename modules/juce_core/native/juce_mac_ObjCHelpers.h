@@ -76,7 +76,7 @@ inline NSArray* createNSArrayFromStringArray (const StringArray& strings)
     for (auto string: strings)
         [array addObject:juceStringToNS (string)];
 
-    return [array autorelease];
+    return array;
 }
 
 inline NSArray* varArrayToNSArray (const var& varToParse);
@@ -244,8 +244,8 @@ struct NSObjectDeleter
 {
     void operator() (NSObject* object) const noexcept
     {
-        if (object != nullptr)
-            [object release];
+//        if (object != nullptr)
+//            [object release];
     }
 };
 
@@ -270,8 +270,8 @@ public:
     ObjCObjectHandle (const ObjCObjectHandle& other)
         : item (other.item)
     {
-        if (item != nullptr)
-            [item retain];
+//        if (item != nullptr)
+//            [item retain];
     }
 
     ObjCObjectHandle& operator= (const ObjCObjectHandle& other)
@@ -297,9 +297,6 @@ public:
 
     void reset()
     {
-        if (item != nullptr)
-            [item release];
-
         item = {};
     }
 
@@ -341,14 +338,116 @@ namespace detail
     }
 } // namespace detail
 
+
+//#import <Foundation/Foundation.h>
+
+//template <typename Type>
+//inline Type getIvar1 (id self, const char* name)
+//{
+//    Ivar ivar = class_getInstanceVariable ([self class], name);
+//    if (!ivar)
+//    {
+//        return NULL;
+//    }
+//    NSValue * v = object_getIvar(self, ivar);
+//    Type ret = *(Type *)[v pointerValue];
+//    return ret;
+////    NSValue * v = object_getIvar(self, ivar);
+////    return [v pointerValue];
+//}
+//
+//template <typename Type_>
+//static inline Type_ &MSHookIvar(id self, const char *name) {
+//    Ivar ivar(class_getInstanceVariable(object_getClass(self), name));
+//    void *pointer(ivar == NULL ? NULL : reinterpret_cast<char *>(self) + ivar_getOffset(ivar));
+//    return *reinterpret_cast<Type_ *>(pointer);
+//}
 //==============================================================================
+
+
+//
+//template <typename Type>
+//void setIvar1 (id self, const char* name, Type *t)
+//{
+////    Class cls = [self class];
+//    Class cls = object_getClass(self);
+//    Ivar ivar = class_getInstanceVariable (cls, name);
+//    if (!ivar)
+//    {
+////        class_addIvar(cls, name, sizeof(Type *), log2(sizeof(Type *)), @encode(Type *));
+//        class_addIvar(cls, name, sizeof(id), log2(sizeof(id)), @encode(id));
+//        ivar = class_getInstanceVariable ([self class], name);
+//    }
+//    NSValue * value = [NSValue valueWithPointer: t];
+////    printf("%set x\n", value);
+////    NSLog(@"@", value);
+////    object_setIvar(self, ivar, (__bridge id)t);
+//    assert([value pointerValue] == t);
+//    object_setIvar(self, ivar, value);
+//
+////    NSValue *v2 = object_getIvar(self, ivar);
+////    Type *t = [v2 pointerValue];
+//}
+
+template <typename T>
+static __inline__ T PKGetIvar(id obj, Ivar ivar)
+{
+    // (T)(uintptr_t)object_getIvar(obj, ivar);
+    return *(T *)((uintptr_t)obj + ivar_getOffset(ivar));
+}
+
+template <typename T>
+static __inline__ T getIvar3(id obj, const char * name)
+{
+    Class cls = object_getClass(obj);
+    Ivar ivar = class_getInstanceVariable(cls, name);
+    assert(ivar != NULL);
+    // (T)(uintptr_t)object_getIvar(obj, ivar);
+//    return
+    return PKGetIvar<T>(obj, ivar);
+}
+
+template <typename T>
+static __inline__ T getIvarId(id obj, const char * name) {
+    Class cls = object_getClass(obj);
+    Ivar ivar = class_getInstanceVariable(cls, name);
+    return (T)object_getIvar(obj, ivar);
+}
+
+template <typename T>
+static __inline__ void PKSetIvar(id obj, Ivar ivar, T value)
+{
+    // object_setIvar(obj, ivar, (id)value);
+    *(T *)((uintptr_t)obj + ivar_getOffset(ivar)) = value;
+}
+
+
+template <typename T>
+static __inline__ void setIvar3(id obj, const char * name, T value)
+{
+    Class cls = object_getClass(obj);
+    Ivar ivar = class_getInstanceVariable(cls, name);
+    assert(ivar != NULL);
+    // object_setIvar(obj, ivar, (id)value);
+    PKSetIvar(obj, ivar, value);
+
+    T res = PKGetIvar<T>(obj, ivar);
+    assert(res == value);
+}
+
 template <typename Type>
 inline Type getIvar (id self, const char* name)
 {
-    void* v = nullptr;
-    object_getInstanceVariable (self, name, &v);
-    return static_cast<Type> (v);
+    return getIvar3<Type>(self, name);
+//    assert(false);
+//    Type *t = ;
+//    return getIvar1<Type>(self, "test");
+//    return res;
+//    void* v = nullptr;
+//    object_getInstanceVariable (self, name, &v);
+//    return static_cast<Type> (v);
 }
+
 
 template <typename SuperclassType>
 struct ObjCClass
@@ -428,7 +527,7 @@ struct ObjCLifetimeManagedClass : public ObjCClass<NSObject>
         addMethod (@selector (initWithJuceObject:), initWithJuceObject);
         JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
-        addMethod (@selector (dealloc),             dealloc);
+//        addMethod (@selector (dealloc),             dealloc);
 
         registerClass();
     }
@@ -436,21 +535,22 @@ struct ObjCLifetimeManagedClass : public ObjCClass<NSObject>
     static id initWithJuceObject (id _self, SEL, JuceClass* obj)
     {
         NSObject* self = sendSuperclassMessage<NSObject*> (_self, @selector (init));
-        object_setInstanceVariable (self, "cppObject", obj);
+//        object_setInstanceVariable (self, "cppObject", obj);
+        assert(false);
 
         return self;
     }
 
-    static void dealloc (id _self, SEL)
-    {
-        if (auto* obj = getIvar<JuceClass*> (_self, "cppObject"))
-        {
-            delete obj;
-            object_setInstanceVariable (_self, "cppObject", nullptr);
-        }
-
-        sendSuperclassMessage<void> (_self, @selector (dealloc));
-    }
+//    static void dealloc (id _self, SEL)
+//    {
+//        if (auto* obj = getIvar<JuceClass*> (_self, "cppObject"))
+//        {
+//            delete obj;
+//            object_setInstanceVariable (_self, "cppObject", nullptr);
+//        }
+//
+//        sendSuperclassMessage<void> (_self, @selector (dealloc));
+//    }
 
     static ObjCLifetimeManagedClass objCLifetimeManagedClass;
 };
@@ -464,9 +564,11 @@ ObjCLifetimeManagedClass<Class> ObjCLifetimeManagedClass<Class>::objCLifetimeMan
 template <typename Class>
 NSObject* createNSObjectFromJuceClass (Class* obj)
 {
-    JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wobjc-method-access")
-    return [ObjCLifetimeManagedClass<Class>::objCLifetimeManagedClass.createInstance() initWithJuceObject:obj];
-    JUCE_END_IGNORE_WARNINGS_GCC_LIKE
+//    JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wobjc-method-access")
+//    return [ObjCLifetimeManagedClass<Class>::objCLifetimeManagedClass.createInstance() initWithJuceObject:obj];
+//    JUCE_END_IGNORE_WARNINGS_GCC_LIKE
+    assert(false);
+    return NULL;
 }
 
 // Get the JUCE class instance that was tied to the life-time of an NSObject with the
@@ -483,7 +585,7 @@ ReturnT (^CreateObjCBlock(Class* object, ReturnT (Class::*fn)(Params...))) (Para
     __block Class* _this = object;
     __block ReturnT (Class::*_fn)(Params...) = fn;
 
-    return [[^ReturnT (Params... params) { return (_this->*_fn) (params...); } copy] autorelease];
+    return ^ReturnT (Params... params) { return (_this->*_fn) (params...); };
 }
 
 template <typename BlockType>
@@ -493,11 +595,19 @@ public:
     ObjCBlock()  { block = nullptr; }
     template <typename R, class C, typename... P>
     ObjCBlock (C* _this, R (C::*fn)(P...))  : block (CreateObjCBlock (_this, fn)) {}
-    ObjCBlock (BlockType b) : block ([b copy]) {}
-    ObjCBlock& operator= (const BlockType& other) { if (block != nullptr) { [block release]; } block = [other copy]; return *this; }
+    ObjCBlock (BlockType b) : block (b) {}
+    ObjCBlock& operator= (const BlockType& other) {
+//        if (block != nullptr) {
+//            [block release]; }
+        block = other;
+        return *this;
+    }
+
     bool operator== (const void* ptr) const  { return ((const void*) block == ptr); }
     bool operator!= (const void* ptr) const  { return ((const void*) block != ptr); }
-    ~ObjCBlock() { if (block != nullptr) [block release]; }
+    ~ObjCBlock() {
+//        if (block != nullptr) [block release];
+    }
 
     operator BlockType() { return block; }
 

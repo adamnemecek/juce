@@ -319,7 +319,7 @@ public:
                                                                      object: nil];
         }
 
-        [delegate release];
+//        [delegate release];
     }
 
     static NSString* getBroadcastEventName()
@@ -465,8 +465,8 @@ void repostCurrentNSEvent()
 {
     struct EventReposter  : public CallbackMessage
     {
-        EventReposter() : e ([[NSApp currentEvent] retain])  {}
-        ~EventReposter() override  { [e release]; }
+        EventReposter() : e ([NSApp currentEvent])  {}
+        ~EventReposter() override  {  }
 
         void messageCallback() override
         {
@@ -501,7 +501,7 @@ struct MountedVolumeListChangeDetector::Pimpl
     ~Pimpl()
     {
         [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver: delegate];
-        [delegate release];
+//        [delegate release];
     }
 
 private:
@@ -523,7 +523,14 @@ private:
         }
 
         static Pimpl* getOwner (id self)                { return getIvar<Pimpl*> (self, "owner"); }
-        static void setOwner (id self, Pimpl* owner)    { object_setInstanceVariable (self, "owner", owner); }
+        static void setOwner (id self, Pimpl* owner)    {
+            setIvar3(self, "owner", owner);
+//            IVar ivar = class_getInstanceVariable([self class], "owner");
+//            object_setIvar(self, ivar, owner);
+//            object_setInstanceVariable (self, "owner", owner);
+//            assert(false);
+
+        }
 
         static void changed (id self, SEL, NSNotification*)
         {

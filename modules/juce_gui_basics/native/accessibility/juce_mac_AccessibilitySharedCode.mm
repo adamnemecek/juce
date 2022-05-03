@@ -34,8 +34,9 @@ struct AccessibleObjCClassDeleter
     {
         juceFreeAccessibilityPlatformSpecificData (element);
 
-        object_setInstanceVariable (element, "handler", nullptr);
-        [element release];
+        //todo adam
+//        assert(false);
+//        setIvar3<ElementType *>(element, "handler", nullptr);
     }
 };
 

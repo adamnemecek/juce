@@ -100,7 +100,7 @@ struct ButtonBasedStatusItem   : public StatusItemContainer
         setIconSize();
         configureIcon();
 
-        statusItem.reset ([[[NSStatusBar systemStatusBar] statusItemWithLength: NSSquareStatusItemLength] retain]);
+        statusItem.reset ([[NSStatusBar systemStatusBar] statusItemWithLength: NSSquareStatusItemLength]);
         auto button = [statusItem.get() button];
         button.image = statusIcon.get();
         button.target = eventForwarder.get();
@@ -195,7 +195,10 @@ struct ButtonBasedStatusItem   : public StatusItemContainer
         }
 
         static ButtonBasedStatusItem* getOwner (id self)               { return getIvar<ButtonBasedStatusItem*> (self, "owner"); }
-        static void setOwner (id self, ButtonBasedStatusItem* owner)   { object_setInstanceVariable (self, "owner", owner); }
+        static void setOwner (id self, ButtonBasedStatusItem* owner)   {
+//            object_setInstanceVariable (self, "owner", owner);
+            assert(false);
+        }
 
     private:
         static void handleEvent (id self, SEL, id)
@@ -223,7 +226,7 @@ struct ViewBasedStatusItem   : public StatusItemContainer
 
         setIconSize();
 
-        statusItem.reset ([[[NSStatusBar systemStatusBar] statusItemWithLength: NSSquareStatusItemLength] retain]);
+        statusItem.reset ([[NSStatusBar systemStatusBar] statusItemWithLength: NSSquareStatusItemLength]);
         [statusItem.get() setView: view.get()];
 
         SystemTrayViewClass::frameChanged (view.get(), SEL(), nullptr);
@@ -328,9 +331,15 @@ struct ViewBasedStatusItem   : public StatusItemContainer
         }
 
         static ViewBasedStatusItem* getOwner (id self)               { return getIvar<ViewBasedStatusItem*> (self, "owner"); }
-        static NSImage* getImage (id self)                           { return getIvar<NSImage*> (self, "image"); }
-        static void setOwner (id self, ViewBasedStatusItem* owner)   { object_setInstanceVariable (self, "owner", owner); }
-        static void setImage (id self, NSImage* image)               { object_setInstanceVariable (self, "image", image); }
+        static NSImage* getImage (id self)                           { return getIvarId<NSImage*> (self, "image"); }
+        static void setOwner (id self, ViewBasedStatusItem* owner)   {
+//            object_setInstanceVariable (self, "owner", owner);
+            assert(false);
+        }
+        static void setImage (id self, NSImage* image)               {
+//            object_setInstanceVariable (self, "image", image);
+            assert(false);
+        }
 
         static void frameChanged (id self, SEL, NSNotification*)
         {
@@ -435,7 +444,8 @@ void SystemTrayIconComponent::hideInfoBubble()
 
 void* SystemTrayIconComponent::getNativeHandle() const
 {
-    return pimpl != nullptr ? pimpl->statusItemHolder->statusItem.get() : nullptr;
+//    return pimpl != nullptr ? pimpl->statusItemHolder->statusItem.get() : nullptr;
+    assert(false);
 }
 
 void SystemTrayIconComponent::showDropdownMenu (const PopupMenu& menu)

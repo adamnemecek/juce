@@ -47,7 +47,6 @@ struct JuceMainMenuBarHolder : private DeletedAtShutdown
         JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
         [mainMenuBar setSubmenu: appMenu forItem: item];
-        [appMenu release];
 
         [NSApp setMainMenu: mainMenuBar];
     }
@@ -57,7 +56,6 @@ struct JuceMainMenuBarHolder : private DeletedAtShutdown
         clearSingletonInstance();
 
         [NSApp setMainMenu: nil];
-        [mainMenuBar release];
     }
 
     NSMenu* mainMenuBar = nil;
@@ -85,8 +83,6 @@ public:
 
         jassert (instance == this);
         instance = nullptr;
-
-        [callback release];
     }
 
     void setMenu (MenuBarModel* const newMenuBarModel,
@@ -120,7 +116,6 @@ public:
         NSMenu* sub = createMenu (child, name, menuId, topLevelIndex, true);
 
         [parent setSubmenu: sub forItem: item];
-        [sub release];
     }
 
     void updateTopLevelMenu (NSMenuItem* parentItem, const PopupMenu& menuToCopy, const String& name, int menuId, int topLevelIndex)
@@ -137,8 +132,6 @@ public:
 
         removeItemRecursive ([parentItem submenu]);
         [parentItem setSubmenu: menu];
-
-        [menu release];
     }
 
     void updateTopLevelMenu (NSMenu* menu)
@@ -283,7 +276,6 @@ public:
 
             NSMenu* sub = createMenu (*i.subMenu, i.text, topLevelMenuId, topLevelIndex, false);
             [menuToAddTo setSubmenu: sub forItem: item];
-            [sub release];
         }
         else
         {
@@ -303,7 +295,7 @@ public:
             auto* juceItem = new PopupMenu::Item (i);
             juceItem->customComponent = nullptr;
 
-            [item setRepresentedObject: [createNSObjectFromJuceClass (juceItem) autorelease]];
+            [item setRepresentedObject: createNSObjectFromJuceClass (juceItem)];
 
             if (i.commandManager != nullptr)
             {
@@ -326,7 +318,6 @@ public:
             }
 
             [menuToAddTo addItem: item];
-            [item release];
         }
     }
 
@@ -362,7 +353,7 @@ private:
     {
         RecentFilesMenuItem() : recentItem (nil)
         {
-            if (NSNib* menuNib = [[[NSNib alloc] initWithNibNamed: @"RecentFilesMenuTemplate" bundle: nil] autorelease])
+            if (NSNib* menuNib = [[NSNib alloc] initWithNibNamed: @"RecentFilesMenuTemplate" bundle: nil])
             {
                 NSArray* array = nil;
 
@@ -387,7 +378,7 @@ private:
                         {
                             if (NSMenuItem* item = findRecentFilesItem (items))
                             {
-                                recentItem = [item retain];
+                                recentItem = item;
                                 break;
                             }
                         }
@@ -398,7 +389,6 @@ private:
 
         ~RecentFilesMenuItem()
         {
-            [recentItem release];
         }
 
         static NSMenuItem* findRecentFilesItem (NSArray* const items)
@@ -441,8 +431,6 @@ private:
         if ([[menu title] isEqualToString: nsStringLiteral ("Apple")])
             return;
 
-        [menu retain];
-
         const unichar f35Key = NSF35FunctionKey;
         NSString* f35String = [NSString stringWithCharacters: &f35Key length: 1];
 
@@ -477,7 +465,6 @@ private:
 
         [item setTarget: instance];
         [menu insertItem: item atIndex: [menu numberOfItems]];
-        [item release];
 
         if ([menu indexOfItem: item] >= 0)
         {
@@ -497,8 +484,6 @@ private:
             if ([menu indexOfItem: item] >= 0)
                 [menu removeItem: item]; // (this throws if the item isn't actually in the menu)
         }
-
-        [menu release];
     }
 
     static unsigned int juceModsToNSMods (const ModifierKeys mods)
@@ -566,7 +551,7 @@ private:
 
         static void setOwner (id self, JuceMainMenuHandler* owner)
         {
-            object_setInstanceVariable (self, "owner", owner);
+//            object_setInstanceVariable (self, "owner", owner);
         }
 
     private:
@@ -624,26 +609,26 @@ public:
             NSMenuItem* item;
 
             item = [[NSMenuItem alloc] initWithTitle: NSLocalizedString (nsStringLiteral ("Cut"), nil)
-                                              action: @selector (cut:)  keyEquivalent: nsStringLiteral ("x")];
+                                              action: @selector (cut:)
+                                       keyEquivalent: nsStringLiteral ("x")];
             [menu addItem: item];
-            [item release];
 
             item = [[NSMenuItem alloc] initWithTitle: NSLocalizedString (nsStringLiteral ("Copy"), nil)
-                                              action: @selector (copy:)  keyEquivalent: nsStringLiteral ("c")];
+                                              action: @selector (copy:)
+                                       keyEquivalent: nsStringLiteral ("c")];
             [menu addItem: item];
-            [item release];
 
             item = [[NSMenuItem alloc] initWithTitle: NSLocalizedString (nsStringLiteral ("Paste"), nil)
-                                              action: @selector (paste:)  keyEquivalent: nsStringLiteral ("v")];
+                                              action: @selector (paste:)  
+                                       keyEquivalent: nsStringLiteral ("v")];
             [menu addItem: item];
-            [item release];
 
             editMenuIndex = [mainMenu numberOfItems];
 
             item = [mainMenu addItemWithTitle: NSLocalizedString (nsStringLiteral ("Edit"), nil)
-                                       action: nil  keyEquivalent: nsEmptyString()];
+                                       action: nil
+                                keyEquivalent: nsEmptyString()];
             [mainMenu setSubmenu: menu forItem: item];
-            [menu release];
         }
 
         // use a dummy modal component so that apps can tell that something is currently modal.
@@ -707,9 +692,9 @@ namespace MainMenuHelpers
 
     static NSMenuItem* createMenuItem (NSMenu* menu, const String& name, SEL sel, NSString* key)
     {
-        NSMenuItem* item = [[[NSMenuItem alloc] initWithTitle: translateMenuName (name)
+        NSMenuItem* item = [[NSMenuItem alloc] initWithTitle: translateMenuName (name)
                                                        action: sel
-                                                keyEquivalent: key] autorelease];
+                                                keyEquivalent: key];
         [item setTarget: NSApp];
         [menu addItem: item];
         return item;
@@ -726,11 +711,11 @@ namespace MainMenuHelpers
         }
 
         // Services...
-        NSMenuItem* services = [[[NSMenuItem alloc] initWithTitle: translateMenuName ("Services")
-                                                           action: nil  keyEquivalent: nsEmptyString()] autorelease];
+        NSMenuItem* services = [[NSMenuItem alloc] initWithTitle: translateMenuName ("Services")
+                                                           action: nil  keyEquivalent: nsEmptyString()];
         [menu addItem: services];
 
-        NSMenu* servicesMenu = [[[NSMenu alloc] initWithTitle: translateMenuName ("Services")] autorelease];
+        NSMenu* servicesMenu = [[NSMenu alloc] initWithTitle: translateMenuName ("Services")];
         [menu setSubmenu: servicesMenu forItem: services];
         [NSApp setServicesMenu: servicesMenu];
         [menu addItem: [NSMenuItem separatorItem]];

@@ -138,7 +138,7 @@ inline const Type* addBytesToPointer (const Type* basePointer, IntegerType bytes
      ~ScopedAutoReleasePool();
 
  private:
-     void* pool;
+//     NSAutoreleasePool* pool;
 
      JUCE_DECLARE_NON_COPYABLE (ScopedAutoReleasePool)
  };

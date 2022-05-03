@@ -936,7 +936,6 @@ CGContextRef juce_getImageContext (const Image& image)
          NSBitmapImageRep* imageRep = [[NSBitmapImageRep alloc] initWithCGImage: imageRef.get()];
          [imageRep setSize: requiredSize];
          [im addRepresentation: imageRep];
-         [imageRep release];
          return im;
      }
  }

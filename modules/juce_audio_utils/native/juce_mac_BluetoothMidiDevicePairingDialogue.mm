@@ -47,7 +47,7 @@ public:
         addMethod (@selector (receivedWindowWillClose:), receivedWindowWillClose);
         JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
-        addMethod (@selector (dealloc), dealloc);
+//        addMethod (@selector (dealloc), dealloc);
 
         registerClass();
     }
@@ -55,15 +55,16 @@ public:
 private:
     static CABTLEMIDIWindowController* getController (id self)
     {
-        return getIvar<CABTLEMIDIWindowController*> (self, "controller");
+        return getIvarId<CABTLEMIDIWindowController*> (self, "controller");
     }
 
     static id initWithCallbacks (id self, SEL, Callbacks* cbs)
     {
         self = sendSuperclassMessage<id> (self, @selector (init));
 
-        object_setInstanceVariable (self, "callbacks", cbs);
-        object_setInstanceVariable (self, "controller", [CABTLEMIDIWindowController new]);
+        assert(false);
+//        object_setInstanceVariable (self, "callbacks", cbs);
+//        object_setInstanceVariable (self, "controller", [CABTLEMIDIWindowController new]);
 
         JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wundeclared-selector")
         [[NSNotificationCenter defaultCenter] addObserver: self
@@ -77,8 +78,9 @@ private:
 
     static void dealloc (id self, SEL)
     {
-        [getController (self) release];
-        sendSuperclassMessage<void> (self, @selector (dealloc));
+//        [getController (self) release];
+//        sendSuperclassMessage<void> (self, @selector (dealloc));
+        assert(false);
     }
 
     static void show (id self, SEL, Rectangle<int>* bounds)
@@ -138,10 +140,11 @@ public:
                                                                           std::move (deletionCB) });
 
         JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wundeclared-selector")
+
         [window.get() performSelector: @selector (initWithCallbacks:)
-                           withObject: (id) callbacks.get()];
+                           withObject: (__bridge id) callbacks.get()];
         [window.get() performSelector: @selector (show:)
-                           withObject: (id) bounds];
+                           withObject: (__bridge id) bounds];
         JUCE_END_IGNORE_WARNINGS_GCC_LIKE
     }
 
